@@ -5,6 +5,7 @@ using Firebase.Auth;
 using Newtonsoft.Json;
 using WhatTheCat.Pages;
 using WhatTheCat.Pages.Auth;
+using WhatTheCat.Services;
 
 namespace WhatTheCat.ViewModels.Auth;
 
@@ -16,18 +17,12 @@ public partial class LoginViewModel : ObservableObject
     private string password;
 
     private readonly INavigation _navigation;
-    private readonly FirebaseAuthProvider _authProvider;
+    private readonly FirebaseService _firebaseService;
 
-    public LoginViewModel(INavigation navigation)
+    public LoginViewModel(INavigation navigation, FirebaseService firebaseService)
     {
         _navigation = navigation;
-        _authProvider = new FirebaseAuthProvider(new FirebaseConfig(Models.Constants.WebApiKey));
-    }
-
-    [RelayCommand]
-    private async Task RegisterBtn()
-    {
-        await _navigation.PushAsync(new RegisterPage());
+        _firebaseService = firebaseService;
     }
 
     [RelayCommand]
@@ -35,15 +30,12 @@ public partial class LoginViewModel : ObservableObject
     {
         try
         {
-            var auth = await _authProvider.SignInWithEmailAndPasswordAsync(Username, Password);
-            var content = await auth.GetFreshAuthAsync();
-            var serializedContent = JsonConvert.SerializeObject(content);
-            Preferences.Set("FreshFirebaseToken", serializedContent);
+            await _firebaseService.LoginAsync(Username, Password);
             await _navigation.PushAsync(new Dashboard());
         }
         catch (Exception ex)
         {
-            var snackbar = Snackbar.Make(ex.Message, duration: TimeSpan.FromSeconds(5));
+            var snackbar = Snackbar.Make("Something went wrong", duration: TimeSpan.FromSeconds(5));
             await snackbar.Show();
         }
     }
@@ -53,19 +45,25 @@ public partial class LoginViewModel : ObservableObject
     {
         try
         {
-            var auth = await _authProvider.SignInAnonymouslyAsync();
-            var content = await auth.GetFreshAuthAsync();
-            content.User.Email = "Anonymous";
-            var serializedContent = JsonConvert.SerializeObject(content);
-            Preferences.Set("FreshFirebaseToken", serializedContent);
-            var toast = Toast.Make("Signed in anonymously");
-            await toast.Show();
+            await _firebaseService.LoginAnonymouslyAsync();
             await _navigation.PushAsync(new Dashboard());
         }
         catch (Exception ex)
         {
-            var snackbar = Snackbar.Make(ex.Message, duration: TimeSpan.FromSeconds(5));
+            var snackbar = Snackbar.Make("Something went wrong", duration: TimeSpan.FromSeconds(5));
             await snackbar.Show();
         }
+    }
+
+    [RelayCommand]
+    private async Task RegisterBtn()
+    {
+        await _navigation.PushAsync(new RegisterPage());
+    }
+
+    [RelayCommand]
+    private async Task ForgotPasswordBtn()
+    {
+        await _navigation.PushAsync(new ForgotPasswordPage());
     }
 }
