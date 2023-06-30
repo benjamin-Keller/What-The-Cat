@@ -1,7 +1,5 @@
 ﻿using CommunityToolkit.Maui;
 using Microsoft.Extensions.Logging;
-using WhatTheCat.Services;
-using WhatTheCat.ViewModels.Auth;
 
 namespace WhatTheCat;
 
@@ -22,7 +20,6 @@ public static class MauiProgram
 #if DEBUG
 		builder.Logging.AddDebug();
 #endif
-
         builder.Services.AddSingleton<MainPage>();
 
 
